@@ -1,975 +1,303 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ระบบสะสมแต้ม ม.1</title>
-<link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --surface2: #21262d;
-    --border: #30363d;
-    --gold: #f0c040;
-    --gold2: #d4a017;
-    --cyan: #58d8e0;
-    --green: #3fb950;
-    --red: #f85149;
-    --text: #e6edf3;
-    --muted: #8b949e;
-
-    /* ห้อง colors */
-    --c4: #f97316;
-    --c5: #a78bfa;
-    --c6: #34d399;
-    --c7: #f472b6;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Sarabun', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.25) 0%, transparent 100%),
-      radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.15) 0%, transparent 100%),
-      radial-gradient(1px 1px at 65% 15%, rgba(255,255,255,0.3) 0%, transparent 100%),
-      radial-gradient(1px 1px at 85% 55%, rgba(255,255,255,0.18) 0%, transparent 100%),
-      radial-gradient(2px 2px at 25% 85%, rgba(248,192,64,0.15) 0%, transparent 100%),
-      radial-gradient(2px 2px at 75% 10%, rgba(88,216,224,0.1) 0%, transparent 100%);
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  /* ── HEADER ── */
-  .header {
-    position: relative;
-    z-index: 10;
-    text-align: center;
-    padding: 22px 20px 14px;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, rgba(240,192,64,0.05) 0%, transparent 100%);
-  }
-
-  .header h1 {
-    font-family: 'Mitr', sans-serif;
-    font-size: 1.75rem;
-    font-weight: 600;
-    background: linear-gradient(135deg, var(--gold) 0%, var(--cyan) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .header p { color: var(--muted); font-size: 0.82rem; margin-top: 3px; }
-
-  /* ── ROOM TABS ── */
-  .room-tabs {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-
-  .room-tabs::-webkit-scrollbar { display: none; }
-
-  .room-tab {
-    flex: 1;
-    min-width: 80px;
-    padding: 13px 8px;
-    text-align: center;
-    cursor: pointer;
-    font-family: 'Mitr', sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--muted);
-    border-bottom: 3px solid transparent;
-    transition: all 0.18s;
-    position: relative;
-    white-space: nowrap;
-  }
-
-  .room-tab:hover { color: var(--text); background: rgba(255,255,255,0.03); }
-
-  .room-tab.active-4 { color: var(--c4); border-bottom-color: var(--c4); background: rgba(249,115,22,0.06); }
-  .room-tab.active-5 { color: var(--c5); border-bottom-color: var(--c5); background: rgba(167,139,250,0.06); }
-  .room-tab.active-6 { color: var(--c6); border-bottom-color: var(--c6); background: rgba(52,211,153,0.06); }
-  .room-tab.active-7 { color: var(--c7); border-bottom-color: var(--c7); background: rgba(244,114,182,0.06); }
-
-  .room-tab .badge {
-    display: inline-block;
-    margin-left: 5px;
-    font-size: 0.65rem;
-    padding: 1px 6px;
-    border-radius: 20px;
-    background: var(--surface2);
-    color: var(--muted);
-    font-family: 'Sarabun', sans-serif;
-    vertical-align: middle;
-  }
-
-  .room-tab.active-4 .badge { background: rgba(249,115,22,0.2); color: var(--c4); }
-  .room-tab.active-5 .badge { background: rgba(167,139,250,0.2); color: var(--c5); }
-  .room-tab.active-6 .badge { background: rgba(52,211,153,0.2); color: var(--c6); }
-  .room-tab.active-7 .badge { background: rgba(244,114,182,0.2); color: var(--c7); }
-
-  /* ── ROOM COLOR STRIPE ── */
-  .room-stripe {
-    height: 2px;
-    position: relative;
-    z-index: 10;
-    transition: background 0.3s;
-  }
-
-  /* ── CONFIG BAR ── */
-  .config-bar {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    gap: 8px;
-    padding: 12px 16px;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .config-bar input {
-    flex: 1;
-    min-width: 180px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-family: 'Sarabun', sans-serif;
-    font-size: 0.85rem;
-  }
-
-  .config-bar input:focus { outline: none; border-color: var(--gold); }
-
-  .btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 8px;
-    font-family: 'Sarabun', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.18s;
-    white-space: nowrap;
-  }
-
-  .btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #0d1117; }
-  .btn-gold:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .btn-cyan { background: var(--surface2); color: var(--cyan); border: 1px solid var(--cyan); }
-  .btn-cyan:hover { background: rgba(88,216,224,0.12); }
-  .btn-ghost { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); }
-
-  /* ── STATUS ── */
-  .status-bar {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 16px;
-    font-size: 0.78rem;
-    color: var(--muted);
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
-  .status-dot.connected { background: var(--green); box-shadow: 0 0 5px var(--green); }
-  .status-dot.loading { background: var(--gold); animation: pulse 1s infinite; }
-  .status-dot.error { background: var(--red); }
-
-  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-
-  /* ── STATS STRIP ── */
-  .stats-strip {
-    position: relative;
-    z-index: 10;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border-bottom: 1px solid var(--border);
-  }
-
-  .stat-box {
-    background: var(--surface);
-    padding: 10px 8px;
-    text-align: center;
-  }
-
-  .stat-box .val {
-    font-family: 'Mitr', sans-serif;
-    font-size: 1.35rem;
-    font-weight: 500;
-    color: var(--gold);
-    transition: color 0.3s;
-  }
-
-  .stat-box .lbl { font-size: 0.68rem; color: var(--muted); margin-top: 1px; }
-
-  /* ── TOOLBAR ── */
-  .toolbar {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    gap: 8px;
-    padding: 10px 16px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  .search-wrap { position: relative; flex: 1; min-width: 160px; }
-  .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-
-  .search-box {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 12px 8px 32px;
-    border-radius: 8px;
-    font-family: 'Sarabun', sans-serif;
-    font-size: 0.88rem;
-  }
-
-  .search-box:focus { outline: none; border-color: var(--cyan); }
-
-  .sort-select {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 10px;
-    border-radius: 8px;
-    font-family: 'Sarabun', sans-serif;
-    font-size: 0.82rem;
-  }
-
-  /* ── GRID ── */
-  .grid-wrap { position: relative; z-index: 10; padding: 14px 16px; }
-
-  .student-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
-    gap: 10px;
-  }
-
-  .student-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 15px 10px 12px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .student-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--room-color, var(--gold));
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-
-  .student-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
-  .student-card:hover::before { opacity: 1; }
-  .student-card:hover { border-color: var(--room-color, var(--gold)); }
-  .student-card.top-3 { border-color: rgba(240,192,64,0.45); }
-  .student-card.top-3::before { opacity: 0.5; }
-
-  .rank-badge {
-    position: absolute;
-    top: 7px; right: 7px;
-    font-family: 'Mitr', sans-serif;
-    font-size: 0.65rem;
-    padding: 2px 5px;
-    border-radius: 20px;
-  }
-
-  .rank-1 { background: rgba(240,192,64,0.2); color: var(--gold); }
-  .rank-2 { background: rgba(192,192,192,0.15); color: #bbb; }
-  .rank-3 { background: rgba(205,127,50,0.2); color: #cd7f32; }
-
-  .avatar {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: var(--surface2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'Mitr', sans-serif;
-    font-size: 1rem;
-    color: var(--cyan);
-    border: 2px solid var(--border);
-    flex-shrink: 0;
-    transition: border-color 0.2s;
-  }
-
-  .student-card:hover .avatar { border-color: var(--room-color, var(--cyan)); }
-
-  .student-name { font-size: 0.79rem; font-weight: 500; text-align: center; line-height: 1.35; }
-  .student-num { font-size: 0.68rem; color: var(--muted); margin-top: -3px; }
-
-  .score-display {
-    font-family: 'Mitr', sans-serif;
-    font-size: 1.9rem;
-    font-weight: 600;
-    color: var(--gold);
-    line-height: 1;
-    transition: color 0.15s;
-  }
-
-  .score-display.bump { animation: scoreBump 0.28s ease; }
-
-  @keyframes scoreBump {
-    0%{transform:scale(1)}
-    50%{transform:scale(1.4);color:#fff}
-    100%{transform:scale(1)}
-  }
-
-  .score-label { font-size: 0.65rem; color: var(--muted); margin-top: -3px; }
-
-  .btn-actions { display: flex; gap: 6px; margin-top: 2px; }
-
-  .btn-score {
-    width: 32px; height: 32px;
-    border: none; border-radius: 50%;
-    font-size: 1.1rem; font-weight: 700;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-    line-height: 1;
-  }
-
-  .btn-plus { background: rgba(63,185,80,0.16); color: var(--green); border: 1.5px solid rgba(63,185,80,0.4); }
-  .btn-plus:hover { background: rgba(63,185,80,0.32); transform: scale(1.15); }
-  .btn-minus { background: rgba(248,81,73,0.1); color: var(--red); border: 1.5px solid rgba(248,81,73,0.3); }
-  .btn-minus:hover { background: rgba(248,81,73,0.22); transform: scale(1.15); }
-
-  /* ── PARTICLES ── */
-  .particle {
-    position: fixed; pointer-events: none; z-index: 9999;
-    border-radius: 50%;
-    animation: floatUp 0.75s ease-out forwards;
-  }
-
-  @keyframes floatUp {
-    0%{opacity:1;transform:translateY(0) scale(1)}
-    100%{opacity:0;transform:translateY(-70px) scale(0.4)}
-  }
-
-  /* ── TOAST ── */
-  .save-toast {
-    position: fixed;
-    bottom: 20px; right: 20px;
-    z-index: 9999;
-    background: var(--surface2);
-    border: 1px solid var(--green);
-    color: var(--green);
-    padding: 10px 18px;
-    border-radius: 10px;
-    font-size: 0.82rem;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: all 0.22s;
-    pointer-events: none;
-  }
-
-  .save-toast.show { opacity: 1; transform: translateY(0); }
-
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.72);
-    z-index: 1000;
-    display: none; align-items: center; justify-content: center;
-    backdrop-filter: blur(4px);
-  }
-
-  .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px;
-    max-width: 500px; width: 92%;
-    max-height: 82vh; overflow-y: auto;
-  }
-
-  .modal h2 { font-family: 'Mitr', sans-serif; font-size: 1.15rem; margin-bottom: 14px; color: var(--gold); }
-  .modal p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; margin-bottom: 10px; }
-
-  .modal pre {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 0.75rem;
-    overflow-x: auto;
-    line-height: 1.55;
-    color: var(--cyan);
-    white-space: pre-wrap;
-    margin-bottom: 12px;
-  }
-
-  .modal .step {
-    background: var(--surface2);
-    border-left: 3px solid var(--gold);
-    padding: 9px 12px;
-    border-radius: 0 8px 8px 0;
-    margin-bottom: 8px;
-    font-size: 0.8rem;
-    line-height: 1.6;
-  }
-
-  .modal .step strong { color: var(--gold); }
-
-  .modal-footer {
-    display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end;
-    flex-wrap: wrap;
-  }
-
-  /* ── ROOM STRUCTURE TABLE ── */
-  .sheet-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.78rem;
-    margin-bottom: 12px;
-  }
-
-  .sheet-table th {
-    background: var(--surface2);
-    padding: 7px 10px;
-    text-align: left;
-    color: var(--gold);
-    border: 1px solid var(--border);
-  }
-
-  .sheet-table td {
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-
-  .sheet-table td span {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.72rem;
-    font-weight: 500;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 50px 20px;
-    color: var(--muted);
-    position: relative; z-index: 10;
-  }
-
-  .empty-state .icon { font-size: 2.8rem; margin-bottom: 10px; opacity: 0.35; }
-  .empty-state p { font-size: 0.87rem; line-height: 1.6; }
-
-  @media (max-width: 480px) {
-    .student-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
-    .header h1 { font-size: 1.3rem; }
-    .stats-strip { grid-template-columns: repeat(2,1fr); }
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⭐ ระบบสะสมแต้มห้องเรียน</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: 'Sarabun', sans-serif; }
+    </style>
 </head>
-<body>
+<body class="bg-[#f0f4ff] text-[#1a1a3e] min-h-screen flex flex-col transition-colors duration-200" id="body-theme">
 
-<!-- HEADER -->
-<div class="header">
-  <h1>⭐ ระบบสะสมแต้มห้องเรียน</h1>
-  <p>ชั้นมัธยมศึกษาปีที่ 1 — ภาคเรียนที่ 1</p>
-</div>
+    <header class="bg-white border-b border-[#dde4f5] p-3 flex flex-wrap items-center justify-between gap-2 id-card">
+        <h1 class="text-lg font-bold text-[#4f7cff]">⭐ ระบบสะสมแต้มห้องเรียน</h1>
+        <div class="flex gap-2 flex-wrap">
+            <button onclick="toggleTheme()" class="border border-[#dde4f5] bg-white text-sm rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#f0f4ff]" id="theme-btn">🌙 โหมดมืด</button>
+            <button onclick="toggleSetup()" class="border border-[#dde4f5] bg-white text-sm rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#f0f4ff]">🛠 ตั้งค่า URL</button>
+            <button onclick="saveRoom()" id="save-btn" class="bg-[#4f7cff] text-white text-sm font-semibold rounded-lg px-4 py-1.5 cursor-pointer hover:bg-[#3b66ff]">💾 บันทึก</button>
+        </div>
+    </header>
 
-<!-- ROOM TABS -->
-<div class="room-tabs" id="roomTabs">
-  <div class="room-tab" id="tab-4" onclick="switchRoom(4)">ม.1/4 <span class="badge" id="badge-4">—</span></div>
-  <div class="room-tab" id="tab-5" onclick="switchRoom(5)">ม.1/5 <span class="badge" id="badge-5">—</span></div>
-  <div class="room-tab" id="tab-6" onclick="switchRoom(6)">ม.1/6 <span class="badge" id="badge-6">—</span></div>
-  <div class="room-tab" id="tab-7" onclick="switchRoom(7)">ม.1/7 <span class="badge" id="badge-7">—</span></div>
-</div>
+    <div class="flex gap-1 bg-white border-b border-[#dde4f5] px-4 pt-2 overflow-x-auto" id="tab-bar">
+        </div>
 
-<div class="room-stripe" id="roomStripe"></div>
+    <main class="p-4 max-w-(screen-md) mx-auto w-full flex-grow">
+        
+        <div id="setup-box" class="hidden bg-white border border-[#dde4f5] rounded-xl p-4 mb-4">
+            <label class="text-sm font-semibold block mb-1">🔗 Web App URL (Google Apps Script)</label>
+            <input type="text" id="url-input" class="w-full border border-[#dde4f5] bg-[#f8faff] rounded-lg p-2 text-sm box-border mt-1" placeholder="https://script.google.com/macros/s/.../exec">
+            <div class="flex gap-2 mt-3">
+                <button onclick="fetchCurrentRoom()" class="bg-[#4f7cff] text-white text-sm font-semibold rounded-lg px-4 py-1.5 cursor-pointer hover:bg-[#3b66ff]">📥 โหลดห้องนี้</button>
+                <button onclick="fetchAllRooms()" class="border border-[#dde4f5] bg-white text-sm rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#f0f4ff]">📥 โหลดทุกห้อง</button>
+            </div>
+            <p class="text-xs text-[#7788aa] mt-2">💡 URL จะถูกบันทึกอัตโนมัติ — ไม่ต้องกรอกใหม่ทุกครั้ง</p>
+        </div>
 
-<!-- CONFIG BAR -->
-<div class="config-bar">
-  <input type="text" id="webAppUrl" value="https://script.google.com/macros/s/AKfycbzmTJ2wTULPkO06QXEnlIpAJQpVYM6QWPsGqM-H3SfOENDacKCkHbmwn0UgsUYuxKqG/exec" placeholder="🔗 วาง Web App URL จาก Google Apps Script..." />
-  <button class="btn btn-gold" onclick="loadCurrentRoom()">📥 โหลดห้องนี้</button>
-  <button class="btn btn-gold" onclick="loadAllRooms()" style="background:linear-gradient(135deg,var(--cyan),#2ab4bc);color:#0d1117;">📥 โหลดทุกห้อง</button>
-  <button class="btn btn-cyan" onclick="saveCurrentRoom()">💾 บันทึก</button>
-  <button class="btn btn-ghost" onclick="openSetupModal()">🛠 วิธีตั้งค่า</button>
-</div>
+        <div class="grid grid-cols-4 gap-2.5 mb-3.5">
+            <div class="bg-white border border-[#dde4f5] rounded-xl p-2.5 text-center id-card">
+                <div id="stat-count" class="text-2xl font-bold text-[#4f7cff]">—</div>
+                <div class="text-xs text-[#7788aa]">นักเรียน</div>
+            </div>
+            <div class="bg-white border border-[#dde4f5] rounded-xl p-2.5 text-center id-card">
+                <div id="stat-total" class="text-2xl font-bold text-[#4f7cff]">—</div>
+                <div class="text-xs text-[#7788aa]">แต้มรวม</div>
+            </div>
+            <div class="bg-white border border-[#dde4f5] rounded-xl p-2.5 text-center id-card">
+                <div id="stat-max" class="text-2xl font-bold text-[#4f7cff]">—</div>
+                <div class="text-xs text-[#7788aa]">สูงสุด</div>
+            </div>
+            <div class="bg-white border border-[#dde4f5] rounded-xl p-2.5 text-center id-card">
+                <div id="stat-avg" class="text-2xl font-bold text-[#4f7cff]">—</div>
+                <div class="text-xs text-[#7788aa]">เฉลี่ย</div>
+            </div>
+        </div>
 
-<!-- STATUS -->
-<div class="status-bar">
-  <div class="status-dot" id="statusDot"></div>
-  <span id="statusText">เลือกห้องที่ต้องการ แล้วกรอก Web App URL เพื่อเริ่มใช้งาน</span>
-</div>
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+            <select id="sort-select" onchange="renderStudents()" class="border border-[#dde4f5] bg-white text-sm rounded-lg px-2.5 py-1.5 cursor-pointer id-card">
+                <option value="number">เรียงเลขที่</option>
+                <option value="name">เรียงชื่อ</option>
+                <option value="score_desc">คะแนน มาก→น้อย</option>
+                <option value="score_asc">คะแนน น้อย→มาก</option>
+            </select>
 
-<!-- STATS -->
-<div class="stats-strip">
-  <div class="stat-box">
-    <div class="val" id="statTotal">0</div>
-    <div class="lbl">นักเรียน</div>
-  </div>
-  <div class="stat-box">
-    <div class="val" id="statPoints">0</div>
-    <div class="lbl">แต้มรวม</div>
-  </div>
-  <div class="stat-box">
-    <div class="val" id="statTop">—</div>
-    <div class="lbl">สูงสุด</div>
-  </div>
-  <div class="stat-box">
-    <div class="val" id="statAvg">—</div>
-    <div class="lbl">เฉลี่ย</div>
-  </div>
-</div>
+            <div class="flex items-center gap-1.5 bg-[#e8edff] border border-[#4f7cff]/20 rounded-xl px-3 py-1.5 flex-wrap id-bulk">
+                <span class="text-xs font-semibold text-[#4f7cff]">📢 ให้/ลดทั้งห้อง</span>
+                <input type="number" id="bulk-amount" min="1" value="1" class="w-12 border border-[#4f7cff]/40 bg-white rounded-md p-1 text-sm text-center">
+                <span class="text-xs text-[#7788aa]">แต้ม</span>
+                <button onclick="bulkChange(1)" class="w-8 h-8 rounded-lg bg-[#22c87a]/10 text-[#22c87a] font-bold text-sm flex items-center justify-center cursor-pointer hover:bg-[#22c87a]/20">+</button>
+                <button onclick="bulkChange(-1)" class="w-8 h-8 rounded-lg bg-[#ff5c6a]/10 text-[#ff5c6a] font-bold text-sm flex items-center justify-center cursor-pointer hover:bg-[#ff5c6a]/20">-</button>
+            </div>
 
-<!-- TOOLBAR -->
-<div class="toolbar">
-  <div class="search-wrap">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input class="search-box" type="text" id="searchBox" placeholder="ค้นหาชื่อหรือเลขที่..." oninput="renderCards()" />
-  </div>
-  <select class="sort-select" id="sortSelect" onchange="renderCards()">
-    <option value="number">เรียงเลขที่</option>
-    <option value="name">เรียงชื่อ</option>
-    <option value="score-desc">คะแนน มาก→น้อย</option>
-    <option value="score-asc">คะแนน น้อย→มาก</option>
-  </select>
-  <button class="btn btn-ghost" onclick="resetRoomScores()" style="font-size:0.78rem;padding:7px 12px;">🔄 รีเซ็ตห้องนี้</button>
-</div>
+            <button onclick="resetRoom()" class="ml-auto bg-[#fff0f1] text-[#ff5c6a] border border-[#ff5c6a]/20 text-sm rounded-lg px-3 py-1.5 cursor-pointer hover:bg-[#fff0f1]/60">🔄 รีเซ็ตห้อง</button>
+        </div>
 
-<!-- GRID -->
-<div class="grid-wrap" id="gridWrap">
-  <div class="empty-state" id="emptyState">
-    <div class="icon">🏫</div>
-    <p>กรอก Web App URL แล้วกด "โหลดห้องนี้"<br>หรือ "โหลดทุกห้อง" เพื่อเริ่มต้น</p>
-  </div>
-  <div class="student-grid" id="studentGrid"></div>
-</div>
+        <div id="student-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+            </div>
+    </main>
 
-<!-- TOAST -->
-<div class="save-toast" id="saveToast"></div>
+    <footer id="status-bar" class="bg-white border-t border-[#dde4f5] p-2 text-xs text-[#7788aa] sticky bottom-0 id-card">
+        ⏳ กำลังโหลดระบบ...
+    </footer>
 
-<!-- SETUP MODAL -->
-<div class="modal-overlay" id="setupModal">
-  <div class="modal">
-    <h2>🛠 วิธีตั้งค่า Google Sheets — 4 ห้องเรียน</h2>
+    <script>
+        const ROOMS = ["ม.1/4", "ม.1/5", "ม.1/6", "ม.1/7"];
+        const STUDENT_EMOJIS = ["🧑‍🎓","👦","👧","🧒","👨‍🏫","🧑","👩","🐻","🐼","🦊","🐯","🐸","🐥","🦁","🐧","🐨","🐮","🐰","🐹","🦉"];
+        
+        let theme = localStorage.getItem("classroomPoints_theme") || "light";
+        let webAppUrl = localStorage.getItem("classroomPoints_webAppUrl") || "";
+        let allData = JSON.parse(localStorage.getItem("classroomPoints_v2")) || {};
+        let activeRoom = ROOMS[0];
+        let loading = false;
 
-    <div class="step"><strong>ขั้นที่ 1:</strong> สร้าง Google Sheets 1 ไฟล์ แล้วสร้าง <strong>4 แท็บ (Sheet Tab)</strong> ชื่อดังนี้:</div>
-    <table class="sheet-table">
-      <tr><th>ชื่อ Tab</th><th>ห้อง</th><th>คอลัมน์</th></tr>
-      <tr><td><span style="background:rgba(249,115,22,0.2);color:#f97316">ม.1/4</span></td><td>ม.1/4</td><td>A: เลขที่ | B: ชื่อ-สกุล | C: คะแนน</td></tr>
-      <tr><td><span style="background:rgba(167,139,250,0.2);color:#a78bfa">ม.1/5</span></td><td>ม.1/5</td><td>A: เลขที่ | B: ชื่อ-สกุล | C: คะแนน</td></tr>
-      <tr><td><span style="background:rgba(52,211,153,0.2);color:#34d399">ม.1/6</span></td><td>ม.1/6</td><td>A: เลขที่ | B: ชื่อ-สกุล | C: คะแนน</td></tr>
-      <tr><td><span style="background:rgba(244,114,182,0.2);color:#f472b6">ม.1/7</span></td><td>ม.1/7</td><td>A: เลขที่ | B: ชื่อ-สกุล | C: คะแนน</td></tr>
-    </table>
+        function getEmoji(name) {
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            return STUDENT_EMOJIS[Math.abs(hash) % STUDENT_EMOJIS.length];
+        }
 
-    <div class="step"><strong>ขั้นที่ 2:</strong> ไปที่ <strong>Extensions → Apps Script</strong> วางโค้ดนี้:</div>
-    <pre id="gasCode">function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheetName = e.parameter.sheet || 'ม.1/4';
-  var sheet = ss.getSheetByName(sheetName);
-  if (!sheet) return ContentService
-    .createTextOutput(JSON.stringify({error:'ไม่พบชีท '+sheetName}))
-    .setMimeType(ContentService.MimeType.JSON);
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var rows = data.slice(1).map(function(row) {
-    var obj = {};
-    headers.forEach(function(h, i) { obj[h] = row[i]; });
-    return obj;
-  }).filter(function(r){ return r['ชื่อ-สกุล']; });
-  return ContentService
-    .createTextOutput(JSON.stringify({ sheet: sheetName, data: rows }))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+        function init() {
+            document.getElementById("url-input").value = webAppUrl;
+            applyTheme();
+            renderTabs();
+            renderStudents();
+            updateStatus(`💾 ข้อมูลบันทึกในเครื่องอัตโนมัติ • ${activeRoom} มี ${(allData[activeRoom] || []).length} คน`);
+        }
 
-function doPost(e) {
-  var payload = JSON.parse(e.postData.contents);
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(payload.sheet);
-  if (!sheet) return ContentService
-    .createTextOutput(JSON.stringify({error:'ไม่พบชีท'}))
-    .setMimeType(ContentService.MimeType.JSON);
-  payload.updates.forEach(function(u) {
-    sheet.getRange(u.row + 1, 3).setValue(u.score);
-  });
-  return ContentService
-    .createTextOutput(JSON.stringify({ success: true, sheet: payload.sheet }))
-    .setMimeType(ContentService.MimeType.JSON);
-}</pre>
+        function renderTabs() {
+            const tabBar = document.getElementById("tab-bar");
+            tabBar.innerHTML = "";
+            ROOMS.forEach(room => {
+                const btn = document.createElement("button");
+                btn.innerText = room;
+                btn.className = `px-4 py-2 cursor-pointer text-sm rounded-t-lg border border-b-0 transition-all ${
+                    activeRoom === room 
+                    ? "bg-[#f0f4ff] text-[#4f7cff] border-[#4f7cff] font-bold dark:bg-[#1a1a2e]" 
+                    : "bg-white text-[#1a1a3e] border-[#dde4f5] dark:bg-[#16213e] dark:text-[#e0e0ff] dark:border-[#0f3460]"
+                }`;
+                btn.onclick = () => { activeRoom = room; renderTabs(); renderStudents(); };
+                tabBar.appendChild(btn);
+            });
+        }
 
-    <div class="step"><strong>ขั้นที่ 3:</strong> กด <strong>Deploy → New deployment → Web app</strong><br>
-    Execute as: <strong>Me</strong> | Who has access: <strong>Anyone</strong><br>
-    คัดลอก <strong>Web App URL</strong> มาวางในแถบด้านบน</div>
+        function renderStudents() {
+            const students = allData[activeRoom] || [];
+            const grid = document.getElementById("student-grid");
+            const sortVal = document.getElementById("sort-select").value;
 
-    <p>💡 URL เดียวใช้ได้ทุกห้อง — ระบบจะส่งชื่อ Tab ไปให้ Apps Script เอง</p>
+            // คำนวณสถิติ
+            const total = students.reduce((s, st) => s + (st["คะแนน"] || 0), 0);
+            const max = students.length ? Math.max(...students.map(s => s["คะแนน"] || 0)) : 0;
+            const avg = students.length ? (total / students.length).toFixed(1) : "—";
 
-    <div class="modal-footer">
-      <button class="btn btn-cyan" onclick="copyGasCode()">📋 คัดลอกโค้ด</button>
-      <button class="btn btn-gold" onclick="closeSetupModal()">เข้าใจแล้ว ✓</button>
-    </div>
-  </div>
-</div>
+            document.getElementById("stat-count").innerText = students.length || "—";
+            document.getElementById("stat-total").innerText = total || "—";
+            document.getElementById("stat-max").innerText = students.length ? max : "—";
+            document.getElementById("stat-avg").innerText = avg;
 
-<script>
-// ─── CONSTANTS ────────────────────────────────────
-const ROOMS = [4, 5, 6, 7];
-const ROOM_COLORS = { 4: '#f97316', 5: '#a78bfa', 6: '#34d399', 7: '#f472b6' };
-const ROOM_NAMES  = { 4: 'ม.1/4', 5: 'ม.1/5', 6: 'ม.1/6', 7: 'ม.1/7' };
+            if (students.length === 0) {
+                grid.className = "block w-full text-center py-12 text-[#7788aa] bg-white border border-dashed border-[#dde4f5] rounded-xl id-card";
+                grid.innerHTML = `<div class="text-4xl mb-2">🏫</div><div class="text-sm font-semibold">ยังไม่มีข้อมูลนักเรียน</div><div class="text-xs mt-1">กดปุ่ม "ตั้งค่า URL" แล้วกด "โหลดห้องนี้"</div>`;
+                return;
+            }
 
-// ─── STATE ────────────────────────────────────────
-let allRooms = { 4: [], 5: [], 6: [], 7: [] };  // students per room
-let currentRoom = 4;
-let webAppUrl = '';
+            grid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5";
+            
+            // เรียงลำดับข้อมูล
+            let sorted = [...students];
+            if (sortVal === "number") sorted.sort((a, b) => (a["เลขที่"] || 0) - (b["เลขที่"] || 0));
+            else if (sortVal === "name") sorted.sort((a, b) => (a["ชื่อ-สกุล"] || "").localeCompare(b["ชื่อ-สกุล"] || "", "th"));
+            else if (sortVal === "score_desc") sorted.sort((a, b) => (b["คะแนน"] || 0) - (a["คะแนน"] || 0));
+            else if (sortVal === "score_asc") sorted.sort((a, b) => (a["คะแนน"] || 0) - (b["คะแนน"] || 0));
 
-// Students shorthand
-const students = () => allRooms[currentRoom];
+            grid.innerHTML = "";
+            sorted.forEach((student) => {
+                const score = student["คะแนน"] || 0;
+                const name = student["ชื่อ-สกุล"] || "";
+                const num = student["เลขที่"] || "—";
+                const emoji = getEmoji(name);
+                const isHigh = score >= max && max > 0;
 
-// ─── ROOM SWITCH ──────────────────────────────────
-function switchRoom(num) {
-  currentRoom = num;
+                const card = document.createElement("div");
+                card.className = `bg-white border rounded-xl p-3 flex flex-col items-center gap-1 transition-all id-card ${
+                    isHigh ? "border-[#4f7cff] ring-2 ring-[#4f7cff]/20" : "border-[#dde4f5]"
+                }`;
 
-  ROOMS.forEach(r => {
-    const t = document.getElementById('tab-' + r);
-    t.className = 'room-tab';
-  });
+                card.innerHTML = `
+                    <div class="text-3xl">${emoji}</div>
+                    <div class="text-[11px] text-[#7788aa]">เลขที่ ${num}</div>
+                    <div class="text-xs text-[#7788aa] font-medium text-center line-clamp-1">${name}</div>
+                    <div class="text-2xl font-bold my-1 text-current">${score}</div>
+                    <div class="flex gap-1.5 mt-1">
+                        <button onclick="changeScore('${name}', ${num}, 1)" class="w-8 h-8 rounded-lg bg-[#22c87a]/10 text-[#22c87a] font-bold flex items-center justify-center cursor-pointer hover:bg-[#22c87a]/20">+</button>
+                        <button onclick="changeScore('${name}', ${num}, -1)" class="w-8 h-8 rounded-lg bg-[#ff5c6a]/10 text-[#ff5c6a] font-bold flex items-center justify-center cursor-pointer hover:bg-[#ff5c6a]/20">−</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            
+            updateStatus(`💾 ข้อมูลบันทึกในเครื่องอัตโนมัติ • ${activeRoom} มี ${students.length} คน`);
+        }
 
-  document.getElementById('tab-' + num).classList.add('active-' + num);
-  document.getElementById('roomStripe').style.background = ROOM_COLORS[num];
+        function changeScore(name, num, delta) {
+            const roomData = allData[activeRoom] || [];
+            const idx = roomData.findIndex(s => s["ชื่อ-สกุล"] === name && s["เลขที่"] === num);
+            if (idx !== -1) {
+                roomData[idx]["คะแนน"] = (roomData[idx]["คะแนน"] || 0) + delta;
+                saveData();
+                renderStudents();
+            }
+        }
 
-  // Update stat colors
-  document.querySelectorAll('.stat-box .val').forEach(el => {
-    el.style.color = ROOM_COLORS[num];
-  });
+        function bulkChange(multiplier) {
+            const amt = (parseInt(document.getElementById("bulk-amount").value) || 1) * multiplier;
+            if (allData[activeRoom]) {
+                allData[activeRoom] = allData[activeRoom].map(s => ({ ...s, "คะแนน": (s["คะแนน"] || 0) + amt }));
+                saveData();
+                renderStudents();
+            }
+        }
 
-  const list = allRooms[num];
-  if (list.length > 0) {
-    document.getElementById('emptyState').style.display = 'none';
-  } else {
-    document.getElementById('emptyState').style.display = 'block';
-  }
+        function resetRoom() {
+            if (!confirm(`รีเซ็ตคะแนนทุกคนในห้อง ${activeRoom}?`)) return;
+            if (allData[activeRoom]) {
+                allData[activeRoom] = allData[activeRoom].map(s => ({ ...s, "คะแนน": 0 }));
+                saveData();
+                renderStudents();
+            }
+        }
 
-  document.getElementById('searchBox').value = '';
-  renderCards();
-  updateStats();
+        async function fetchRoom(room, url) {
+            if (!url) { updateStatus("⚠️ กรุณากรอก Web App URL ก่อน"); return; }
+            loading = true;
+            updateStatus(`กำลังโหลด ${room}...`);
+            try {
+                const res = await fetch(`${url}?sheet=${encodeURIComponent(room)}`);
+                const json = await res.json();
+                if (json.error) throw new Error(json.error);
+                allData[room] = json.data;
+                saveData();
+                updateStatus(`✅ โหลด ${room} สำเร็จ (${json.data.length} คน)`);
+            } catch (e) {
+                updateStatus(`❌ โหลดไม่สำเร็จ: ${e.message}`);
+            }
+            loading = false;
+        }
 
-  setStatus(list.length > 0 ? 'connected' : '', list.length > 0
-    ? `ห้อง ${ROOM_NAMES[num]} — พบนักเรียน ${list.length} คน`
-    : `ยังไม่ได้โหลดข้อมูลห้อง ${ROOM_NAMES[num]}`);
-}
+        async function fetchCurrentRoom() {
+            const url = document.getElementById("url-input").value.trim();
+            if (!url) { updateStatus("⚠️ กรุณากรอก Web App URL ก่อน"); return; }
+            webAppUrl = url;
+            localStorage.setItem("classroomPoints_webAppUrl", url);
+            await fetchRoom(activeRoom, url);
+            renderStudents();
+        }
 
-// ─── LOAD ROOM ────────────────────────────────────
-async function loadCurrentRoom() {
-  const url = document.getElementById('webAppUrl').value.trim();
-  if (!url) { showToast('⚠️ กรุณากรอก Web App URL', '#f0c040'); return; }
-  webAppUrl = url;
-  await fetchRoom(currentRoom);
-}
+        async function fetchAllRooms() {
+            const url = document.getElementById("url-input").value.trim();
+            if (!url) { updateStatus("⚠️ กรุณากรอก Web App URL ก่อน"); return; }
+            webAppUrl = url;
+            localStorage.setItem("classroomPoints_webAppUrl", url);
+            for (const room of ROOMS) {
+                await fetchRoom(room, url);
+            }
+            renderTabs();
+            renderStudents();
+            updateStatus("✅ โหลดทุกห้องเรียบร้อย");
+        }
 
-async function loadAllRooms() {
-  const url = document.getElementById('webAppUrl').value.trim();
-  if (!url) { showToast('⚠️ กรุณากรอก Web App URL', '#f0c040'); return; }
-  webAppUrl = url;
-  setStatus('loading', 'กำลังโหลดทุกห้อง...');
-  for (const r of ROOMS) {
-    await fetchRoom(r, true);
-  }
-  setStatus('connected', 'โหลดทุกห้องสำเร็จ!');
-  showToast('✅ โหลดทุกห้องเรียบร้อย', '#3fb950');
-  switchRoom(currentRoom);
-}
+        async function saveRoom() {
+            if (!webAppUrl) { updateStatus("⚠️ ยังไม่มี URL"); return; }
+            const students = allData[activeRoom] || [];
+            loading = true;
+            updateStatus("กำลังบันทึกไปยัง Google Sheets...");
+            try {
+                const updates = students.map((s, i) => ({ row: i + 1, score: s["คะแนน"] || 0 }));
+                const res = await fetch(webAppUrl, {
+                    method: "POST",
+                    body: JSON.stringify({ sheet: activeRoom, updates }),
+                });
+                const json = await res.json();
+                if (json.success) updateStatus("✅ บันทึกสำเร็จลง Google Sheets แล้ว");
+                else throw new Error(JSON.stringify(json));
+            } catch (e) {
+                updateStatus(`❌ บันทึกไม่สำเร็จ: ${e.message}`);
+            }
+            loading = false;
+        }
 
-async function fetchRoom(roomNum, silent = false) {
-  if (!silent) setStatus('loading', `กำลังโหลดห้อง ${ROOM_NAMES[roomNum]}...`);
-  const sheetName = ROOM_NAMES[roomNum];
-  try {
-    const res = await fetch(webAppUrl + '?sheet=' + encodeURIComponent(sheetName));
-    const text = await res.text();
-    let json;
-    try { json = JSON.parse(text); } catch(e) {
-      setStatus('error', 'รับข้อมูลไม่ถูกต้อง — ตรวจสอบ Web App URL');
-      return;
-    }
-    if (json.error) { setStatus('error', 'ข้อผิดพลาด: ' + json.error); return; }
+        function saveData() { localStorage.setItem("classroomPoints_v2", JSON.stringify(allData)); }
+        function updateStatus(msg) { document.getElementById("status-bar").innerText = loading ? "⏳ กำลังดำเนินการ..." : msg; }
+        function toggleSetup() { document.getElementById("setup-box").classList.toggle("hidden"); }
+        
+        function toggleTheme() {
+            theme = theme === "light" ? "dark" : "light";
+            localStorage.setItem("classroomPoints_theme", theme);
+            applyTheme();
+            renderTabs();
+        }
 
-    // หา key ชื่อและเลขที่อัตโนมัติ (รองรับทุกชื่อคอลัมน์)
-    const sample = json.data[0] || {};
-    const keys = Object.keys(sample);
-    const nameKey  = keys.find(k => k.includes('ชื่อ') || k.toLowerCase().includes('name')) || 'ชื่อ-สกุล';
-    const numKey   = keys.find(k => k.includes('เลข') || k.toLowerCase().includes('number') || k.toLowerCase().includes('no')) || 'เลขที่';
-    const scoreKey = keys.find(k => k.includes('คะแนน') || k.toLowerCase().includes('score') || k.toLowerCase().includes('point')) || 'คะแนน';
+        function applyTheme() {
+            const isDark = theme === "dark";
+            const body = document.getElementById("body-theme");
+            const btn = document.getElementById("theme-btn");
+            
+            if (isDark) {
+                body.className = "bg-[#1a1a2e] text-[#e0e0ff] min-h-screen flex flex-col transition-colors duration-200";
+                btn.innerText = "☀️ โหมดสว่าง";
+                document.querySelectorAll(".id-card").forEach(el => el.classList.add("!bg-[#16213e]", "!border-[#0f3460]"));
+                document.querySelectorAll(".id-bulk").forEach(el => el.classList.add("!bg-[#1e2a5e]", "!border-[#4f7cff]/40"));
+            } else {
+                body.className = "bg-[#f0f4ff] text-[#1a1a3e] min-h-screen flex flex-col transition-colors duration-200";
+                btn.innerText = "🌙 โหมดมืด";
+                document.querySelectorAll(".id-card").forEach(el => el.classList.remove("!bg-[#16213e]", "!border-[#0f3460]"));
+                document.querySelectorAll(".id-bulk").forEach(el => el.classList.remove("!bg-[#1e2a5e]", "!border-[#4f7cff]/40"));
+            }
+        }
 
-    allRooms[roomNum] = json.data
-      .map((row, i) => ({
-        number: row[numKey] !== undefined && row[numKey] !== '' ? row[numKey] : i + 1,
-        name: String(row[nameKey] || '').trim(),
-        score: parseInt(row[scoreKey]) || 0,
-        row: i + 2
-      }))
-      .filter(s => s.name !== '');
-
-    // Update badge
-    document.getElementById('badge-' + roomNum).textContent = allRooms[roomNum].length + ' คน';
-
-    if (!silent) {
-      setStatus('connected', `ห้อง ${sheetName} — โหลดสำเร็จ ${allRooms[roomNum].length} คน`);
-      document.getElementById('emptyState').style.display = 'none';
-      renderCards();
-      updateStats();
-      showToast(`✅ โหลดห้อง ${sheetName} สำเร็จ`, '#3fb950');
-    }
-  } catch(e) {
-    setStatus('error', `โหลดห้อง ${sheetName} ไม่ได้`);
-    if (!silent) showToast(`❌ โหลดห้อง ${sheetName} ไม่สำเร็จ`, '#f85149');
-  }
-}
-
-// ─── RENDER CARDS ─────────────────────────────────
-function renderCards() {
-  const list = allRooms[currentRoom];
-  const query = document.getElementById('searchBox').value.toLowerCase();
-  const sort = document.getElementById('sortSelect').value;
-  const color = ROOM_COLORS[currentRoom];
-
-  let filtered = list.filter(s =>
-    s.name.toLowerCase().includes(query) ||
-    String(s.number).includes(query)
-  );
-
-  const sorted = [...filtered].sort((a, b) => {
-    if (sort === 'name') return a.name.localeCompare(b.name, 'th');
-    if (sort === 'score-desc') return b.score - a.score;
-    if (sort === 'score-asc') return a.score - b.score;
-    return Number(a.number) - Number(b.number);
-  });
-
-  // Rank within room
-  const scoreRanks = {};
-  [...list].sort((a,b) => b.score - a.score).forEach((s, i) => { scoreRanks[s.name] = i + 1; });
-
-  const grid = document.getElementById('studentGrid');
-  grid.innerHTML = '';
-
-  if (list.length === 0) {
-    document.getElementById('emptyState').style.display = 'block';
-    return;
-  }
-  document.getElementById('emptyState').style.display = 'none';
-
-  sorted.forEach(s => {
-    const rank = scoreRanks[s.name];
-    const nameWords = s.name.replace(/เด็กชาย|เด็กหญิง/,'').trim().split(' ');
-    const initials = nameWords.slice(0,2).map(w=>w[0]).join('') || s.name[0];
-
-    const card = document.createElement('div');
-    card.className = 'student-card' + (rank <= 3 && s.score > 0 ? ' top-3' : '');
-    card.style.setProperty('--room-color', color);
-
-    card.innerHTML = `
-      ${rank <= 3 && s.score > 0 ? `<div class="rank-badge rank-${rank}">${rank===1?'🥇':rank===2?'🥈':'🥉'} #${rank}</div>` : ''}
-      <div class="avatar">${initials}</div>
-      <div class="student-name">${s.name}</div>
-      <div class="student-num">เลขที่ ${s.number}</div>
-      <div class="score-display" id="sc-${currentRoom}-${s.number}">${s.score}</div>
-      <div class="score-label">แต้ม</div>
-      <div class="btn-actions">
-        <button class="btn-score btn-minus" onclick="changeScore(${currentRoom},${s.number},-1,this)">−</button>
-        <button class="btn-score btn-plus"  onclick="changeScore(${currentRoom},${s.number},1,this)">+</button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
-
-  if (sorted.length === 0 && query) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);">ไม่พบนักเรียนที่ค้นหา</div>';
-  }
-}
-
-// ─── CHANGE SCORE ─────────────────────────────────
-function changeScore(roomNum, studentNum, delta, btn) {
-  const s = allRooms[roomNum].find(s => s.number == studentNum);
-  if (!s) return;
-  s.score = Math.max(0, s.score + delta);
-
-  const el = document.getElementById(`sc-${roomNum}-${studentNum}`);
-  if (el) {
-    el.textContent = s.score;
-    el.classList.remove('bump');
-    void el.offsetWidth;
-    el.classList.add('bump');
-  }
-
-  if (delta > 0) spawnParticles(btn, ROOM_COLORS[roomNum]);
-  updateStats();
-  renderCards();
-}
-
-// ─── PARTICLES ────────────────────────────────────
-function spawnParticles(btn, color) {
-  const rect = btn.getBoundingClientRect();
-  const colors = [color, '#f0c040', '#fff', '#58d8e0'];
-  for (let i = 0; i < 6; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const sz = 5 + Math.random() * 6;
-    p.style.cssText = `
-      width:${sz}px;height:${sz}px;
-      background:${colors[Math.floor(Math.random()*colors.length)]};
-      left:${rect.left + rect.width/2 + (Math.random()-.5)*28}px;
-      top:${rect.top}px;
-      animation-delay:${Math.random()*.1}s;
-      animation-duration:${.55+Math.random()*.35}s;
-    `;
-    document.body.appendChild(p);
-    setTimeout(() => p.remove(), 900);
-  }
-}
-
-// ─── STATS ────────────────────────────────────────
-function updateStats() {
-  const list = allRooms[currentRoom];
-  document.getElementById('statTotal').textContent = list.length;
-  const total = list.reduce((a, s) => a + s.score, 0);
-  document.getElementById('statPoints').textContent = total;
-  const max = list.reduce((a, s) => Math.max(a, s.score), 0);
-  document.getElementById('statTop').textContent = max > 0 ? max : '—';
-  const avg = list.length > 0 ? (total / list.length).toFixed(1) : '—';
-  document.getElementById('statAvg').textContent = avg;
-}
-
-// ─── SAVE (เปิด URL ในแท็บใหม่ — หลีกเลี่ยงปัญหา file://) ──
-async function saveCurrentRoom() {
-  if (!webAppUrl) { showToast('⚠️ กรุณากรอก Web App URL ก่อน', '#f0c040'); return; }
-  const list = allRooms[currentRoom];
-  if (!list.length) { showToast('⚠️ ยังไม่มีข้อมูลห้องนี้', '#f0c040'); return; }
-
-  const sheetName = ROOM_NAMES[currentRoom];
-  const updates = list.map(s => s.row + ':' + s.score).join(',');
-  const url = webAppUrl
-    + '?action=save'
-    + '&sheet=' + encodeURIComponent(sheetName)
-    + '&updates=' + encodeURIComponent(updates);
-
-  // เปิดในแท็บใหม่ — ทำงานได้แม้เปิดไฟล์จาก file://
-  const win = window.open(url, '_blank');
-
-  // ปิดแท็บอัตโนมัติหลัง 3 วิ + แจ้งผล
-  setStatus('loading', `กำลังบันทึกห้อง ${sheetName}...`);
-  setTimeout(() => {
-    try { win.close(); } catch(e) {}
-    setStatus('connected', `บันทึกห้อง ${sheetName} สำเร็จ`);
-    showToast(`✅ บันทึกห้อง ${sheetName} แล้ว`, '#3fb950');
-  }, 3000);
-}
-
-// ─── RESET ────────────────────────────────────────
-function resetRoomScores() {
-  const list = allRooms[currentRoom];
-  if (!list.length) return;
-  if (!confirm(`รีเซ็ตคะแนนทุกคนในห้อง ${ROOM_NAMES[currentRoom]} เป็น 0 ใช่ไหม?`)) return;
-  list.forEach(s => s.score = 0);
-  renderCards();
-  updateStats();
-  showToast(`🔄 รีเซ็ตห้อง ${ROOM_NAMES[currentRoom]} เรียบร้อย`, '#f0c040');
-}
-
-// ─── STATUS / TOAST ────────────────────────────────
-function setStatus(type, msg) {
-  document.getElementById('statusDot').className = 'status-dot ' + type;
-  document.getElementById('statusText').textContent = msg;
-}
-
-function showToast(msg, color) {
-  const t = document.getElementById('saveToast');
-  t.textContent = msg;
-  t.style.borderColor = color;
-  t.style.color = color;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// ─── MODAL ────────────────────────────────────────
-function openSetupModal() { document.getElementById('setupModal').classList.add('open'); }
-function closeSetupModal() { document.getElementById('setupModal').classList.remove('open'); }
-
-function copyGasCode() {
-  navigator.clipboard.writeText(document.getElementById('gasCode').textContent)
-    .then(() => showToast('📋 คัดลอกโค้ดแล้ว', '#58d8e0'));
-}
-
-document.getElementById('setupModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('setupModal')) closeSetupModal();
-});
-
-// ─── DEMO DATA ────────────────────────────────────
-function loadDemo() {
-  const names4 = [
-    ['เด็กชายกิตติพงษ์ มีสุข',8],['เด็กหญิงนภาพร ใจงาม',12],['เด็กชายธนวัฒน์ สว่างใจ',5],
-    ['เด็กหญิงปาริชาต ดีเลิศ',15],['เด็กชายภูริทัต อ่อนหวาน',9],['เด็กหญิงวรินทร์ทิพย์ ขยัน',7]
-  ];
-  const names5 = [
-    ['เด็กชายสิรวิชญ์ เฉลียว',11],['เด็กหญิงอรนภา แสงทอง',6],['เด็กชายอานุภาพ เจริญ',14],
-    ['เด็กหญิงชนิดาภา พูลสุข',10],['เด็กชายณัฐวุฒิ ตั้งใจ',8],['เด็กหญิงพิมพ์ชนก งาม',13]
-  ];
-  const names6 = [
-    ['เด็กชายรัชชานนท์ สดใส',7],['เด็กหญิงอัญชลี มั่นคง',9],['เด็กชายวีรชัย แกร่ง',12],
-    ['เด็กหญิงสุภาวดี อ่อนโยน',5],['เด็กชายเจษฎา เก่งกล้า',16],['เด็กหญิงกนกวรรณ สว่าง',8]
-  ];
-  const names7 = [
-    ['เด็กชายปิยะพงษ์ ดูดี',10],['เด็กหญิงธัญญาภรณ์ สุขใส',13],['เด็กชายวุฒิชัย ยิ้มแย้ม',6],
-    ['เด็กหญิงปภัสสร แจ่มใส',11],['เด็กชายนพรัตน์ เฮงดี',9],['เด็กหญิงพรนภัส มีสุข',14]
-  ];
-
-  [names4, names5, names6, names7].forEach((names, ri) => {
-    const room = ROOMS[ri];
-    allRooms[room] = names.map(([name, score], i) => ({
-      number: i+1, name, score, row: i+2
-    }));
-    document.getElementById('badge-' + room).textContent = names.length + ' คน';
-  });
-
-  setStatus('connected', '⚠️ โหมดทดสอบ (Demo) — ข้อมูลจำลอง 4 ห้อง');
-  switchRoom(4);
-}
-
-// INIT
-switchRoom(4);
-loadDemo();
-</script>
+        window.onload = init;
+    </script>
 </body>
 </html>
